@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <Nullable>enable</Nullable>
+        <UseWindowsForms>true</UseWindowsForms>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\CommandLinePlus.GUI.Example.Models\CommandLinePlus.GUI.Example.Models.csproj"/>
+        <ProjectReference Include="..\CommandLinePlus.GUI\CommandLinePlus.GUI.csproj"/>
+        <ProjectReference Include="..\CommandLinePlus.Shared\CommandLinePlus.Shared.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommandLineParser" Version="2.9.1"/>
+    </ItemGroup>
+
+</Project>

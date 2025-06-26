@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\CommandLinePlus.GUI.Example.Models\CommandLinePlus.GUI.Example.Models.csproj"/>
+        <ProjectReference Include="..\..\src\CommandLinePlus.Shared\CommandLinePlus.Shared.csproj"/>
+        <ProjectReference Include="..\CommandLinePlus.Tests.Shared\CommandLinePlus.Tests.Shared.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1"/>
+        <PackageReference Include="NUnit" Version="3.14.0"/>
+    </ItemGroup>
+
+</Project>

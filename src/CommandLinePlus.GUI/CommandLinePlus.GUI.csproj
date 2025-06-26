@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <Nullable>disable</Nullable>
+        <UseWindowsForms>true</UseWindowsForms>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <EnableWindowsTargeting>true</EnableWindowsTargeting>
+
+        <!-- NuGet Package Metadata -->
+        <PackageId>CommandLinePlus.GUI</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Your Name</Authors>
+        <Description>A Windows Forms GUI generator for CommandLineParser. Automatically creates user-friendly interfaces for your CLI applications.</Description>
+        <PackageTags>commandline;parser;gui;winforms;cli</PackageTags>
+        <PackageProjectUrl>https://github.com/yourusername/CommandLinePlus.GUI</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/yourusername/CommandLinePlus.GUI</RepositoryUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+
+
+    <ItemGroup>
+        <ProjectReference Include="..\CommandLinePlus.Shared\CommandLinePlus.Shared.csproj"/>
+    </ItemGroup>
+
+
+</Project>

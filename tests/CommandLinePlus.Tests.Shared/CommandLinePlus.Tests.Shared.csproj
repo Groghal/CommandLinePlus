@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <IsPackable>true</IsPackable>
+        <PackageId>CommandLinePlus.Tests.Shared</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Your Name</Authors>
+        <Description>Shared test utilities for validating CommandLineParser verb classes</Description>
+        <PackageTags>CommandLineParser;Testing;Validation;NUnit</PackageTags>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\CommandLinePlus.Shared\CommandLinePlus.Shared.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1"/>
+        <PackageReference Include="NUnit" Version="3.14.0"/>
+        <PackageReference Include="CommandLineParser" Version="2.9.1"/>
+    </ItemGroup>
+
+</Project>
