@@ -87,7 +87,7 @@ public static class CommandArgumentBuilder
                 args.Add(optionName);
                 args.Add(value.ToString().ToLowerInvariant());
             }
-            else if (IsEnumerableType(prop.PropertyType))
+            else if (IsEnumerableType(prop.PropertyType) || IsEnumerableType(value.GetType()))
             {
                 // Handle IEnumerable types
                 var collection = value as IEnumerable;
@@ -99,25 +99,10 @@ public static class CommandArgumentBuilder
 
                 if (items.Any())
                 {
-                    // Multiple values can be handled in different ways:
-                    // 1. Multiple occurrences of the same option
-                    // 2. Single option with values separated by a delimiter
-
-                    if (optAttr.Separator != default(char))
-                    {
-                        // Use separator
-                        args.Add(optionName);
-                        args.Add(string.Join(optAttr.Separator.ToString(), items));
-                    }
-                    else
-                    {
-                        // Add multiple times
-                        foreach (var item in items)
-                        {
-                            args.Add(optionName);
-                            args.Add(QuoteIfNeeded(item));
-                        }
-                    }
+                    // Use separator (default to comma if not specified)
+                    var separator = optAttr.Separator != default(char) ? optAttr.Separator : ',';
+                    args.Add(optionName);
+                    args.Add(string.Join(separator.ToString(), items));
                 }
             }
             else
@@ -237,7 +222,7 @@ public static class CommandArgumentBuilder
                 args.Add(optionName);
                 args.Add(value.ToString().ToLowerInvariant());
             }
-            else if (IsEnumerableType(prop.PropertyType))
+            else if (IsEnumerableType(prop.PropertyType) || IsEnumerableType(value.GetType()))
             {
                 // Handle IEnumerable types
                 var collection = value as IEnumerable;
@@ -249,25 +234,10 @@ public static class CommandArgumentBuilder
 
                 if (items.Any())
                 {
-                    // Multiple values can be handled in different ways:
-                    // 1. Multiple occurrences of the same option
-                    // 2. Single option with values separated by a delimiter
-
-                    if (optAttr.Separator != default(char))
-                    {
-                        // Use separator
-                        args.Add(optionName);
-                        args.Add(string.Join(optAttr.Separator.ToString(), items));
-                    }
-                    else
-                    {
-                        // Add multiple times
-                        foreach (var item in items)
-                        {
-                            args.Add(optionName);
-                            args.Add(QuoteIfNeeded(item));
-                        }
-                    }
+                    // Use separator (default to comma if not specified)
+                    var separator = optAttr.Separator != default(char) ? optAttr.Separator : ',';
+                    args.Add(optionName);
+                    args.Add(string.Join(separator.ToString(), items));
                 }
             }
             else

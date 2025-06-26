@@ -1,4 +1,4 @@
-﻿namespace CommandLinePlus.GUI;
+﻿namespace CommandLinePlus.GUI.Models;
 
 /// <summary>
 /// Theme configuration for CommandLinePlus.GUI

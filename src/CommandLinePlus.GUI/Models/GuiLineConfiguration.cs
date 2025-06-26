@@ -1,6 +1,4 @@
-﻿using CommandLinePlus.GUI.Models;
-
-namespace CommandLinePlus.GUI;
+﻿namespace CommandLinePlus.GUI.Models;
 
 /// <summary>
 /// Configuration options for CommandLinePlus.GUI
@@ -66,4 +64,15 @@ public class GuiConfiguration
     /// Custom theme settings
     /// </summary>
     public GuiTheme Theme { get; set; } = new();
+
+    /// <summary>
+    /// Whether to execute the command after user confirmation
+    /// </summary>
+    public bool ExecuteCommand { get; set; } = false;
+
+    /// <summary>
+    /// Optional function to execute the command. If not provided, Process.Start will be used.
+    /// Parameters: command string, returns (exitCode, output, error)
+    /// </summary>
+    public Func<string, (int exitCode, string output, string error)> CommandExecutor { get; set; }
 }

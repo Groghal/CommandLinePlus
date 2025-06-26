@@ -47,7 +47,7 @@ public class DockerBuildOptions : IDefaultSetter
     [Option("label", Required = false, HelpText = "Set metadata for an image")]
     public IEnumerable<string> Labels { get; set; }
 
-    [Option("context", Required = false, Default = ".", HelpText = "Build context path or URL")]
+    [Option("context", Required = false, HelpText = "Build context path or URL")]
     [PathType(PathType.Directory)]
     public string Context { get; set; }
 

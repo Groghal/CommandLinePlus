@@ -1,4 +1,6 @@
 using System.Reflection;
+using CommandLinePlus.GUI.Models;
+using CommandLinePlus.Shared;
 
 namespace CommandLinePlus.GUI;
 
@@ -13,11 +15,13 @@ public static class CommandLinePlus
     /// <typeparam name="T">The options class with CommandLineParser attributes</typeparam>
     /// <param name="args">Command line arguments to pre-populate the form</param>
     /// <param name="configuration">Optional configuration for the GUI</param>
+    /// <param name="defaultSetterAction">Optional action to set default values</param>
     /// <returns>The parsed options object if user clicked Run, null if cancelled</returns>
-    public static T Show<T>(string[] args = null, GuiConfiguration configuration = null) where T : class
+    public static T Show<T>(string[] args = null, GuiConfiguration configuration = null, 
+        Action<IDefaultSetter> defaultSetterAction = null) where T : class
     {
         var assemblies = new[] { typeof(T).Assembly };
-        return Show<T>(assemblies, args, configuration);
+        return Show<T>(assemblies, args, configuration, defaultSetterAction);
     }
 
     /// <summary>
@@ -26,12 +30,13 @@ public static class CommandLinePlus
     /// <param name="assemblies">Assemblies to scan for verb classes</param>
     /// <param name="args">Command line arguments to pre-populate the form</param>
     /// <param name="configuration">Optional configuration for the GUI</param>
+    /// <param name="defaultSetterAction">Optional action to set default values</param>
     /// <returns>The parsed options object if user clicked Run, null if cancelled</returns>
     public static object Show(IEnumerable<Assembly> assemblies, string[] args = null,
-        GuiConfiguration configuration = null)
+        GuiConfiguration configuration = null, Action<IDefaultSetter> defaultSetterAction = null)
     {
         configuration ??= new GuiConfiguration();
-        var manager = new CliGuiManager(configuration.ExecutableName, assemblies, configuration);
+        var manager = new CliGuiManager(configuration.ExecutableName, assemblies, configuration, defaultSetterAction);
         return manager.ShowGui(args);
     }
 
@@ -42,10 +47,11 @@ public static class CommandLinePlus
     /// <param name="assemblies">Assemblies to scan for verb classes</param>
     /// <param name="args">Command line arguments to pre-populate the form</param>
     /// <param name="configuration">Optional configuration for the GUI</param>
+    /// <param name="defaultSetterAction">Optional action to set default values</param>
     /// <returns>The parsed options object if user clicked Run, null if cancelled</returns>
     public static T Show<T>(IEnumerable<Assembly> assemblies, string[] args = null,
-        GuiConfiguration configuration = null) where T : class
+        GuiConfiguration configuration = null, Action<IDefaultSetter> defaultSetterAction = null) where T : class
     {
-        return Show(assemblies, args, configuration) as T;
+        return Show(assemblies, args, configuration, defaultSetterAction) as T;
     }
 }

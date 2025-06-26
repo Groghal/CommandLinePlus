@@ -1,7 +1,9 @@
 using CommandLine;
 using CommandLinePlus.GUI;
+using CommandLinePlus.GUI.Example.Models.Models;
 using CommandLinePlus.GUI.Example.Models.Verbs;
 using CommandLinePlus.GUI.Models;
+using CommandLinePlus.Shared;
 
 namespace CommandLinePlus.GUI.Example;
 
@@ -30,17 +32,49 @@ internal class Program
                 ShowRequiredAsterisk = true,
                 UseRequiredFieldBoldFont = true,
                 RequiredFieldBackgroundColor = Color.FromArgb(255, 255, 240, 240) // Light red tint
+            },
+            // Enable command execution to trigger IPostAction
+            ExecuteCommand = false, // Set to true to actually execute commands
+            // Custom command executor (optional) - this example just simulates execution
+            CommandExecutor = (command) =>
+            {
+                Console.WriteLine($"[Simulated Execution] {command}");
+                // Simulate success for demonstration
+                return (0, "Build complete", "");
             }
         };
 
+        // Define custom default setter action
+        Action<IDefaultSetter> customDefaultSetter = (defaultSetter) =>
+        {
+            // Check if it's a DockerBuildOptions instance
+            if (defaultSetter is DockerBuildOptions buildOptions)
+            {
+                // Set custom defaults based on environment or context
+                buildOptions.Platform = Platform.LinuxAmd64;
+                buildOptions.NoCache = true;
+                buildOptions.Progress = "plain";
+                buildOptions.Tags = new[] { "myapp:latest", "myapp:v1.0" };
+            }
+            // Check if it's a DockerRunOptions instance
+            else if (defaultSetter is DockerRunOptions runOptions)
+            {
+                // Set custom defaults for run command
+                runOptions.RestartPolicy = RestartPolicy.UnlessStopped;
+                runOptions.Memory = "512m";
+                runOptions.Detach = true;
+            }
+        };
+        
         // Show GUI with multiple verbs from current assembly
         var result = CommandLinePlus.Show(new[] { typeof(Program).Assembly, typeof(DockerBuildOptions).Assembly }, args,
-            config);
+            config, setter => customDefaultSetter(setter));
 
         if (result != null)
         {
             Console.WriteLine($"\nExecuted Command Type: {result.GetType().Name}");
-            Console.WriteLine($"Generated Command: docker {result}");
+            var commandString = CommandArgumentBuilder.BuildCommandString(result);
+            Console.WriteLine($"Generated Command: docker {commandString}");
 
             // Handle specific command types
             switch (result)
@@ -70,6 +104,10 @@ internal class Program
                         Console.WriteLine($"  Profiles: {string.Join(", ", compose.Profiles)}");
                     break;
             }
+            
+            // Note: If the result implements IPostAction and ExecuteCommand is true in configuration,
+            // the post-action will be executed automatically after the command runs.
+            // Example: DockerBuildWithPostAction implements IPostAction to log build results.
         }
         else
         {

@@ -1,6 +1,6 @@
-# GuiLine
+# CommandLinePlus.GUI
 
-GuiLine is a Windows Forms GUI generator for [CommandLineParser](https://github.com/commandlineparser/commandline). It automatically creates user-friendly graphical interfaces for your command-line applications.
+CommandLinePlus.GUI is a Windows Forms GUI generator for [CommandLineParser](https://github.com/commandlineparser/commandline). It automatically creates user-friendly graphical interfaces for your command-line applications.
 
 ## Features
 
@@ -16,7 +16,7 @@ GuiLine is a Windows Forms GUI generator for [CommandLineParser](https://github.
 ## Installation
 
 ```bash
-dotnet add package GuiLine
+dotnet add package CommandLinePlus.GUI
 ```
 
 ## Quick Start
@@ -25,7 +25,7 @@ dotnet add package GuiLine
 
 ```csharp
 using CommandLine;
-using GuiLine;
+using CommandLinePlus.GUI;
 
 [Verb("deploy", HelpText = "Deploy application")]
 public class DeployOptions
@@ -46,7 +46,7 @@ class Program
     static void Main(string[] args)
     {
         // Show GUI and get parsed options
-        var options = GuiLine.Show<DeployOptions>(args);
+        var options = CommandLinePlus.Show<DeployOptions>(args);
         
         if (options != null)
         {
@@ -72,7 +72,7 @@ public class RemoveOptions { /* ... */ }
 public class ListOptions { /* ... */ }
 
 // Show GUI with verb selection
-var result = GuiLine.Show(
+var result = CommandLinePlus.Show(
     new[] { typeof(Program).Assembly }, 
     args
 );
@@ -345,7 +345,7 @@ static void Main(string[] args)
     if (args.Contains("--gui"))
     {
         args = args.Where(a => a != "--gui").ToArray();
-        var options = GuiLine.Show<Options>(args);
+        var options = CommandLinePlus.Show<Options>(args);
         if (options == null) return; // User cancelled
         
         // Convert back to args for existing parser
@@ -382,6 +382,112 @@ Options with common file/folder names automatically get browse buttons:
 - Names containing: file, path, folder, directory
 - Drag-and-drop support for easy file selection
 
+### Post-Execution Actions with IPostAction
+
+You can implement the `IPostAction` interface in your verb classes to execute custom logic after the command runs:
+
+```csharp
+using CommandLine;
+using CommandLinePlus.Shared;
+
+[Verb("build", HelpText = "Build with post-action")]
+public class BuildOptions : IPostAction
+{
+    [Option('t', "tag", Required = false, HelpText = "Image tags")]
+    public IEnumerable<string> Tags { get; set; }
+    
+    [Option("log-file", HelpText = "Path to log file")]
+    public string LogFile { get; set; }
+
+    public void ExecutePostAction(object verb, int exitCode, string output, string error)
+    {
+        // Cast to access typed properties
+        var buildOptions = verb as BuildOptions;
+        
+        // This method is called after the command executes
+        if (exitCode == 0)
+        {
+            Console.WriteLine("✓ Build successful!");
+            // Access all verb properties
+            Console.WriteLine($"  Tags: {string.Join(", ", buildOptions?.Tags ?? new[] { "none" })}");
+            // Log success, send notifications, etc.
+        }
+        else
+        {
+            Console.WriteLine($"✗ Build failed with code {exitCode}");
+            // Handle errors, cleanup, etc.
+        }
+        
+        // Write to log file if specified
+        if (!string.IsNullOrEmpty(buildOptions?.LogFile))
+        {
+            var logEntry = $"{DateTime.Now}: Exit={exitCode}, Tags={string.Join(",", buildOptions.Tags)}\n{output}\n";
+            File.AppendAllText(buildOptions.LogFile, logEntry);
+        }
+    }
+}
+```
+
+To enable command execution and post-actions:
+
+```csharp
+var config = new GuiConfiguration
+{
+    ExecutableName = "docker",
+    WindowTitle = "Docker Command Builder",
+    // Enable command execution
+    ExecuteCommand = true,
+    // Optional: provide custom command executor
+    CommandExecutor = (command) =>
+    {
+        // Custom execution logic
+        // Return (exitCode, output, error)
+        return MyCustomExecutor.Run(command);
+    }
+};
+
+var result = CommandLinePlus.Show<BuildOptions>(args, config);
+```
+
+When `ExecuteCommand` is set to `true`:
+1. The command will be executed after user confirmation
+2. If the verb implements `IPostAction`, the `ExecutePostAction` method will be called with the execution results
+3. You can perform cleanup, logging, notifications, or any other post-execution tasks
+
+#### Type-Safe Post Actions
+
+For better type safety, you can use the generic `IPostAction<T>` interface:
+
+```csharp
+[Verb("deploy", HelpText = "Deploy application")]
+public class DeployOptions : IPostAction<DeployOptions>
+{
+    [Option('e', "environment", Required = true)]
+    public string Environment { get; set; }
+    
+    [Option('v', "version", Required = true)]
+    public string Version { get; set; }
+    
+    [Option("notify-slack", HelpText = "Slack webhook for notifications")]
+    public string SlackWebhook { get; set; }
+
+    public void ExecutePostAction(DeployOptions verb, int exitCode, string output, string error)
+    {
+        // Direct typed access to all properties
+        Console.WriteLine($"Deployment of v{verb.Version} to {verb.Environment}: {(exitCode == 0 ? "SUCCESS" : "FAILED")}");
+        
+        if (!string.IsNullOrEmpty(verb.SlackWebhook))
+        {
+            // Send notification with full context
+            var message = $"Deployed {verb.Version} to {verb.Environment} - {(exitCode == 0 ? "✓" : "✗")}";
+            // SendSlackNotification(verb.SlackWebhook, message);
+        }
+    }
+}
+```
+
+The generic interface provides compile-time type safety and intellisense support for accessing verb properties.
+
 ## License
 
 MIT License - see LICENSE file for details
@@ -392,4 +498,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Support
 
-For issues and feature requests, please use the [GitHub issue tracker](https://github.com/yourusername/GuiLine/issues).
+For issues and feature requests, please use the [GitHub issue tracker](https://github.com/Groghal/CommandLinePlus/issues).

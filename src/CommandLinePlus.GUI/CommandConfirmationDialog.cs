@@ -53,6 +53,11 @@ public class CommandConfirmationDialog : Form
             Font = new Font("Consolas", 9),
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
         };
+        
+        // Ensure the text box shows the full command
+        _commandTextBox.SelectionStart = 0;
+        _commandTextBox.SelectionLength = 0;
+        _commandTextBox.ScrollToCaret();
 
         _includeDefaultsCheckBox = new CheckBox
         {

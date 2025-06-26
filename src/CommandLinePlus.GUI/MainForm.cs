@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections;
+using System.Diagnostics;
 using System.Reflection;
 using CommandLine;
 using CommandLinePlus.GUI.Models;
@@ -484,9 +485,19 @@ public partial class MainForm : Form
             var optionDisplayName = string.IsNullOrEmpty(optAttr.LongName)
                 ? ConvertToKebabCase(prop.Name)
                 : optAttr.LongName;
+            
+            // Add separator info for IEnumerable<string> properties
+            var separatorInfo = "";
+            if (IsEnumerableType(prop.PropertyType) && prop.PropertyType != typeof(string) && enumType == null)
+            {
+                var separator = optAttr.Separator != default(char) ? optAttr.Separator : ',';
+                separatorInfo = $" (separate multiple with '{separator}')";
+            }
+            
             var labelText = (_configuration.Theme.ShowRequiredAsterisk && optAttr.Required ? "* " : "") +
                             optionDisplayName +
                             (!string.IsNullOrEmpty(optAttr.HelpText) ? $" ({optAttr.HelpText})" : "") +
+                            separatorInfo +
                             enumValues;
 
             var label = new Label
@@ -746,7 +757,26 @@ public partial class MainForm : Form
                 if (optAttr.Required) input.BackColor = _configuration.Theme.RequiredFieldBackgroundColor;
 
                 if (defaultValue != null && !(defaultValue is bool))
-                    ((TextBox)input).Text = defaultValue.ToString();
+                {
+                    // Handle collections properly
+                    if (IsEnumerableType(prop.PropertyType) && prop.PropertyType != typeof(string))
+                    {
+                        if (defaultValue is IEnumerable enumerable)
+                        {
+                            var items = new List<string>();
+                            foreach (var item in enumerable)
+                            {
+                                if (item != null)
+                                    items.Add(item.ToString());
+                            }
+                            ((TextBox)input).Text = string.Join(optAttr.Separator.ToString(), items);
+                        }
+                    }
+                    else
+                    {
+                        ((TextBox)input).Text = defaultValue.ToString();
+                    }
+                }
 
                 var browseButton = new Button
                 {
@@ -943,6 +973,7 @@ public partial class MainForm : Form
         foreach (var kvp in _optionInputs)
         {
             var (prop, control) = kvp.Value;
+            var optAttr = prop.GetCustomAttribute<OptionAttribute>();
             object value = null;
 
             if (control is CheckBox checkBox)
@@ -1018,7 +1049,8 @@ public partial class MainForm : Form
                 else if (IsEnumerableType(propType) && propType != typeof(string))
                 {
                     var elementType = propType.GetGenericArguments()[0];
-                    var values = textBox.Text.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s))
+                    var separator = optAttr.Separator != default(char) ? optAttr.Separator : ',';
+                    var values = textBox.Text.Split(separator).Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s))
                         .ToList();
 
                     if (values.Any())
@@ -1098,6 +1130,7 @@ public partial class MainForm : Form
         var commandArgs = CommandArgumentBuilder.BuildCommandString(parsedObject);
         _commandString = $"{_exeName} {commandArgs}";
 
+
         // Show command confirmation dialog
         using (var confirmDialog = new CommandConfirmationDialog(_commandString, parsedObject, _exeName))
         {
@@ -1106,11 +1139,75 @@ public partial class MainForm : Form
             if (dialogResult == DialogResult.Yes)
             {
                 // User confirmed execution
+                if (_configuration.ExecuteCommand)
+                {
+                    // Execute the command
+                    try
+                    {
+                        var (exitCode, output, error) = ExecuteCommand(_commandString);
+                        
+                        // Check if the parsed object implements IPostAction
+                        if (parsedObject is IPostAction postAction)
+                        {
+                            postAction.ExecutePostAction(parsedObject, exitCode, output, error);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error executing command: {ex.Message}", "Execution Error", 
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                
                 DialogResult = DialogResult.OK;
                 Close();
             }
             // else: User cancelled, stay on the form
         }
+    }
+
+    private (int exitCode, string output, string error) ExecuteCommand(string command)
+    {
+        // Use custom executor if provided
+        if (_configuration.CommandExecutor != null)
+        {
+            return _configuration.CommandExecutor(command);
+        }
+
+        // Default implementation using Process
+        using var process = new System.Diagnostics.Process();
+        
+        // Determine shell based on platform
+        string shell, shellArgs;
+        if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+        {
+            shell = "cmd.exe";
+            shellArgs = $"/c {command}";
+        }
+        else
+        {
+            shell = "/bin/sh";
+            shellArgs = $"-c \"{command}\"";
+        }
+        
+        process.StartInfo = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = shell,
+            Arguments = shellArgs,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        process.Start();
+        
+        var output = process.StandardOutput.ReadToEnd();
+        var error = process.StandardError.ReadToEnd();
+        
+        process.WaitForExit();
+        
+        return (process.ExitCode, output, error);
     }
 
     public object GetResult()
